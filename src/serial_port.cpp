@@ -7,11 +7,10 @@
 #include <std_msgs/UInt8MultiArray.h>
 //#include "crc.h"
 
-
 serial::Serial ser; //聲明串口對象
 //crc::CRC cc_crc;
 
-unsigned int CRC32(unsigned char* message, unsigned int l)
+unsigned int CRC32(unsigned char *message, unsigned int l)
 {
     size_t i, j;
     unsigned int crc, msb;
@@ -66,6 +65,9 @@ int main(int argc, char **argv)
     ros::Subscriber write_sub = nh.subscribe("write", 1000, write_callback);
     //發佈主題
     ros::Publisher read_pub = nh.advertise<std_msgs::String>("read", 1000);
+
+    ros::Publisher write_pub = nh.advertise<std_msgs::String>("write", 1000);
+
     try
     {
         //設置串口屬性，並打開串口
@@ -90,25 +92,39 @@ int main(int argc, char **argv)
         return -1;
     }
     //指定循環的頻率
-    ros::Rate loop_rate(1);
-    ser.write("ihgfedcba\n");
+    ros::Rate loop_rate(10);
+    ser.write("021050332341");
     // crc32
     uint8_t *crc = new uint8_t[12];
+    bool sent = 0;
     while (ros::ok())
     {
         if (ser.available())
         {
             ROS_INFO_STREAM("Reading from serial port\n");
             std_msgs::String result;
-            ser.write("ihgfedcba\n");
+            std_msgs::String send;
             result.data = ser.readline(ser.available());
             //string indata = ser.read(ser.available());
             ROS_INFO_STREAM("Read: " << result.data);
             //std::cout << crc32b((uint8_t*)result.data, sizeof((uint8_t*)result.data)) << "\n";
             read_pub.publish(result);
+
+            //write
+            send.data = ser.write("021050332341");
+            sent = 1;
+            if (sent == 1)
+            {
+                ROS_INFO_STREAM("Sending to serial port\n");
+                ROS_INFO_STREAM("Send: " << send.data);
+                write_pub.publish(send);
+                sent = 0;
+                //std::cout << send.data;
+            }
+
             //
         }
-        
+
         //處理ROS的信息，比如訂閱消息,並調用回調函數
         ros::spinOnce();
         loop_rate.sleep();
