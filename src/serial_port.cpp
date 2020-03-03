@@ -92,9 +92,11 @@ int main(int argc, char **argv)
         return -1;
     }
     //指定循環的頻率
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(100);
     ser.write("021050332341");
     // crc32
+    uint32_t tx[12] = {0, 9, 3, 4, 2, 0, 3, 6, 6, 7, 8, 7};
+    //uint8_t tx_char[48] = (uint8_t*)tx;
     uint8_t *crc = new uint8_t[12];
     bool sent = 0;
     while (ros::ok())
@@ -111,7 +113,7 @@ int main(int argc, char **argv)
             read_pub.publish(result);
 
             //write
-            send.data = ser.write("021050332341");
+            send.data = ser.write("093420366787");
             sent = 1;
             if (sent == 1)
             {
