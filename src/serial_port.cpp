@@ -10,7 +10,7 @@
 serial::Serial ser; //聲明串口對象
 //crc::CRC cc_crc;
 
-unsigned int CRC32(unsigned char *message, unsigned int l)
+unsigned int CRC32(unsigned int *message, unsigned int l)
 {
     size_t i, j;
     unsigned int crc, msb;
@@ -33,7 +33,7 @@ unsigned int CRC32(unsigned char *message, unsigned int l)
 //回調函數
 void write_callback(const std_msgs::String::ConstPtr &msg)
 {
-    ROS_INFO_STREAM("Writing to serial port" << msg->data);
+    //ROS_INFO_STREAM("Writing to serial port" << msg->data);
     ser.write(msg->data); //發送串口數據
 }
 // unsigned int crc32b(unsigned char *message, size_t l)
@@ -92,10 +92,12 @@ int main(int argc, char **argv)
         return -1;
     }
     //指定循環的頻率
-    ros::Rate loop_rate(100);
-    ser.write("021050332341");
+    ros::Rate loop_rate(1);
+    //ser.write("12345");
     // crc32
-    uint32_t tx[12] = {0, 9, 3, 4, 2, 0, 3, 6, 6, 7, 8, 7};
+    uint32_t tx[1] = {1/*, 2, 3, 4, 5*/}; //37 30 32 32 39
+    char tx_arr[10];
+    sprintf(tx_arr, "%u", tx[0]/*, tx[1], tx[2], tx[3], tx[4]*/);
     //uint8_t tx_char[48] = (uint8_t*)tx;
     uint8_t *crc = new uint8_t[12];
     bool sent = 0;
@@ -105,7 +107,7 @@ int main(int argc, char **argv)
         {
             ROS_INFO_STREAM("Reading from serial port\n");
             std_msgs::String result;
-            std_msgs::String send;
+            
             result.data = ser.readline(ser.available());
             //string indata = ser.read(ser.available());
             ROS_INFO_STREAM("Read: " << result.data);
@@ -113,21 +115,20 @@ int main(int argc, char **argv)
             read_pub.publish(result);
 
             //write
-            send.data = ser.write("093420366787");
-            sent = 1;
-            if (sent == 1)
-            {
-                ROS_INFO_STREAM("Sending to serial port\n");
-                ROS_INFO_STREAM("Send: " << send.data);
-                write_pub.publish(send);
-                sent = 0;
-                //std::cout << send.data;
-            }
+            
+            //ROS_INFO_STREAM("Sending to serial port\n");
+            //ROS_INFO_STREAM("Send: " << send.data);
+            
 
             //
         }
+        std_msgs::String send;
+        send.data = ser.write((const uint8_t*)tx, sizeof(tx)+3);
+        ROS_INFO_STREAM("Sending to serial port\n");
+        ROS_INFO_STREAM("Send: " << send.data);
+        write_pub.publish(send);
 
-        //處理ROS的信息，比如訂閱消息,並調用回調函數
+        //處理ROS的信息，比如訂閱消do息,並調用回調函數
         ros::spinOnce();
         loop_rate.sleep();
     }
