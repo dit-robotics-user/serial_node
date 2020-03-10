@@ -5,13 +5,25 @@
 #include <std_msgs/Empty.h>
 #include <std_msgs/UInt8.h>
 #include <std_msgs/UInt8MultiArray.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/Int32MultiArray.h>
+
 #include <stdlib.h>
+#include <time.h>
+#include <string.h>
 //#include "crc.h"
 
 using namespace std;
 
 serial::Serial ser; //聲明串口對象
 //crc::CRC cc_crc;
+
+/*void delay(int duration)
+{
+    clock_t start_time = clock();
+    while (clock() < start_time + duration)
+        ;
+}*/
 
 // crc only for stm
 uint32_t crc32_mpeg_2(uint8_t *data, uint8_t length)
@@ -68,16 +80,18 @@ int main(int argc, char **argv)
     //訂閱主題，並配置回調函數
     ros::Subscriber write_sub = nh.subscribe("write", 1000, write_callback);
     //發佈主題
-    ros::Publisher read_pub = nh.advertise<std_msgs::String>("read", 1000);
+    ros::Publisher read_pub = nh.advertise<std_msgs::Int32MultiArray>("read", 1000);
 
     ros::Publisher write_pub = nh.advertise<std_msgs::String>("write", 1000);
+    
+    ros::Publisher rate_pub = nh.advertise<std_msgs::Int32>("success_rate", 1000);
 
     try
     {
         //設置串口屬性，並打開串口
         ser.setPort("/dev/ttyUSB0");
         ser.setBaudrate(115200);
-        serial::Timeout to = serial::Timeout::simpleTimeout(1000);
+        serial::Timeout to = serial::Timeout::simpleTimeout(12);
         ser.setTimeout(to);
         ser.open();
     }
@@ -110,58 +124,103 @@ int main(int argc, char **argv)
     //  - 6000: idle, disable motor driver;
     int32_t tx[5]; //37 30 32 32 39
     tx_init(tx);
-    uint32_t rx[5];
+    int32_t rx[100];
     // [xxxxx, yyyyy, tttt, cccc_cccc_cc, (\n)]
     char tx_arr[10];
     sprintf(tx_arr, "%u", tx[0]/*, tx[1], tx[2], tx[3], tx[4]*/);
-    //uint8_t tx_char[48] = (uint8_t*)tx;
+    //uint8_t tx_char[48] = (ui                                                                  nt8_t*)tx;
     uint8_t *crc = new uint8_t[12];
     bool sent = 0;
     int count = 0;
+	int len = 4;
+	uint32_t indata[6] = {0};
+	int32_t tmp;
+	
+	int rcv_count = 0;
+	int error_count = 0;
+	int success_rate = 0;
+	int transmit_param = 0;
+	char* location;
+	//int delay_ms = 10;
+	
     while (ros::ok())
     {
-        if (ser.available())
+        if (ser.available()>=24)
         {
-            // ROS_INFO_STREAM("Reading from serial port\n");
-            // std_msgs::String rx_str;
             
-            // rx_str.data = ser.readline(ser.available());
-            // rx[0] = rx_str.data[0] - 48;/*atoi((const char*)&rx_str.data);*/
-            // //string indata = ser.read(ser.available());
-            // ROS_INFO_STREAM("Read: " << rx_str.data);
-            // std::cout << rx[0] << "\n";
-            // //std::cout << crc32b((uint8_t*)result.data, sizeof((uint8_t*)result.data)) << "\n";
-            // read_pub.publish(rx_str);
-
-            //write
+            //ROS_INFO_STREAM("Reading from serial port\n");
+            //std_msgs::String rx_str;
+            std_msgs::Int32MultiArray rx_str;
+			string test;
+            test = ser.readline(24);
             
-            
-            
-
-            //
+			rx_str.data.clear();
+			
+			for(int i=0; i<len+1; i++){
+				tmp = (int32_t)test[4*i] + (int32_t)test[4*i+1]*256 +
+					(int32_t)test[4*i+2]*65536 +(int32_t)test[4*i+3]*16777216;
+				//tmp = (int32_t) test[i];				
+				rx_str.data.push_back(tmp);
+				indata[i] = tmp;
+			}
+			/*for (int i = 0; i < 50; i++) {
+			    std::cout << dec << indata[i] << " ";
+			    
+			}
+			std::cout << "\n";*/
+			if (count > 50) {
+			    success_rate = (int)(100*(rcv_count-error_count)/rcv_count);
+			    rcv_count = 0;
+			    error_count = 0;
+			    count = 0;
+			}
+			
+			if (indata[4] == crc32_mpeg_2((uint8_t*)indata, 16)) {
+			    rcv_count ++;
+			    //ROS_INFO_STREAM("Read: " << test);
+                read_pub.publish(rx_str);
+			}
+			else {
+			    rcv_count ++;
+			    error_count++;
+			}
+			
+        } else {
+            transmit_param++;
         }
-        if (count > 0) {
+        
+        if (count >= 0) {
             tx[0] ++;
             tx[1] ++;
             tx[2] ++;
-            tx[3] ++;
+            tx[3] = transmit_param;
             tx[4] =crc32_mpeg_2((uint8_t*)tx, 16);
-            count = 0;
+            //count = 0;
         }
-        ROS_INFO_STREAM("CRC = " << tx[4]);
+       
+        //ROS_INFO_STREAM("CRC = " << tx[4]);
         std_msgs::String tx_str;
+        //if (transmit_param == 2) {
         tx_str.data = ser.write((const uint8_t*)tx, sizeof(tx)+3);
-        ROS_INFO_STREAM("Sending to serial port\n");
-        ROS_INFO_STREAM("Send: " << 
-            tx[0] << " " << 
-            tx[1] << " " << 
-            tx[2] << " " << 
-            tx[3] << " " <<
-            tx[4]);
         write_pub.publish(tx_str);
+        //transmit_param = 0;
+        //}//ROS_INFO_STREAM("Sending to serial port\n");
+        //ROS_INFO_STREAM("Send: " << 
+        //    tx[0] << " " << 
+        //    tx[1] << " " << 
+        //    tx[2] << " " << 
+        //    tx[3] << " " <<
+        //    tx[4]);
+        
+        
+        // publish success rate
+        std_msgs::Int32 success_rate_msg;
+        success_rate_msg.data = success_rate;
+        rate_pub.publish(success_rate_msg);
         count ++;
         //處理ROS的信息，比如訂閱消do息,並調用回調函數
         ros::spinOnce();
         loop_rate.sleep();
+        //delay(delay_ms);
     }
 }
