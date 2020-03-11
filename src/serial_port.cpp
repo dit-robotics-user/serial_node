@@ -16,6 +16,17 @@ using namespace std;
 
 serial::Serial ser; //聲明串口對象
 
+int tx_count = 0;
+int tx_len = 4;
+int32_t tx[6]={0};// tx_len + 2
+int rx_len = 4;
+uint32_t indata[6] = {0};// rx_len + 2
+int32_t tmp;
+	
+int rcv_count = 0;
+int error_count = 0;
+int success_rate = 0;
+
 // crc only for stm
 uint32_t modified_crc32_mpeg_2(uint8_t *data, uint8_t length)
 {
@@ -54,13 +65,23 @@ void write_callback(const std_msgs::String::ConstPtr &msg)
     ser.write(msg->data); //發送串口數據
 }
 
+void fromAgent_callback(const std_msgs::Int32MultiArray::ConstPtr &msg)
+{
+    tx[0] = msg->data[0];
+    tx[1] = msg->data[1];
+    tx[2] = 94;
+    tx[3] = 87;
+    tx[4] = modified_crc32_mpeg_2((uint8_t*)tx, 16);
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "serial_node");
     ros::NodeHandle nh;
     ros::Subscriber write_sub = nh.subscribe("write", 1000, write_callback);
+    ros::Subscriber from_agent = nh.subscribe("fromAgent", 1, fromAgent_callback);
     
-    ros::Publisher read_pub = nh.advertise<std_msgs::Int32MultiArray>("read", 1000);
+    ros::Publisher read_pub = nh.advertise<std_msgs::Int32MultiArray>("read", 1);
     ros::Publisher write_pub = nh.advertise<std_msgs::String>("write", 1000);
     ros::Publisher rate_pub = nh.advertise<std_msgs::Int32>("success_rate", 1000);
 
@@ -87,7 +108,7 @@ int main(int argc, char **argv)
         return -1;
     }
     
-    ros::Rate loop_rate(100);
+    ros::Rate loop_rate(400);
 
     //uint32_t tx[mode, R1, R2, R3, crc];
     // mode(hex):
@@ -103,17 +124,9 @@ int main(int argc, char **argv)
 	std_msgs::Int32 success_rate_msg;
     std_msgs::String tx_str;
     
-    int tx_count = 0;
-	int rx_len = 4;
-	int tx_len = 4;
-	int32_t tx[tx_len+1]={0}; 
+    
     tx_init(tx); // to be removed
-	uint32_t indata[rx_len+2] = {0};
-	int32_t tmp;
 	
-	int rcv_count = 0;
-	int error_count = 0;
-	int success_rate = 0;
 	
     while (ros::ok())
     {
