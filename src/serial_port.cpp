@@ -50,15 +50,6 @@ uint32_t modified_crc32_mpeg_2(uint8_t *data, uint8_t length)
     return crc;
 }
 
-void tx_init(int32_t* tx)
-{
-    tx[0] = 1;
-    tx[1] = 0;
-    tx[2] = 0;
-    tx[3] = 0;
-    tx[4] = modified_crc32_mpeg_2((uint8_t*)tx, 16);
-}
-
 //回調函數
 void write_callback(const std_msgs::String::ConstPtr &msg)
 {
@@ -69,9 +60,9 @@ void fromAgent_callback(const std_msgs::Int32MultiArray::ConstPtr &msg)
 {
     tx[0] = msg->data[0];
     tx[1] = msg->data[1];
-    tx[2] = 94;
-    tx[3] = 87;
-    tx[4] = modified_crc32_mpeg_2((uint8_t*)tx, 16);
+    tx[2] = msg->data[2];
+    tx[3] = msg->data[3];
+    //tx[4] = modified_crc32_mpeg_2((uint8_t*)tx, 16);
 }
 
 int main(int argc, char **argv)
@@ -79,10 +70,10 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "serial_node");
     ros::NodeHandle nh;
     ros::Subscriber write_sub = nh.subscribe("write", 1000, write_callback);
-    ros::Subscriber from_agent = nh.subscribe("fromAgent", 1, fromAgent_callback);
-    
-    ros::Publisher read_pub = nh.advertise<std_msgs::Int32MultiArray>("read", 1);
     ros::Publisher write_pub = nh.advertise<std_msgs::String>("write", 1000);
+    
+    ros::Subscriber from_agent = nh.subscribe("txST1", 1, fromAgent_callback);
+    ros::Publisher read_pub = nh.advertise<std_msgs::Int32MultiArray>("rxST1", 1);
     ros::Publisher rate_pub = nh.advertise<std_msgs::Int32>("success_rate", 1000);
 
     try
@@ -122,11 +113,7 @@ int main(int argc, char **argv)
     std_msgs::Int32MultiArray rx_msg;
     string test;			    
 	std_msgs::Int32 success_rate_msg;
-    std_msgs::String tx_str;
-    
-    
-    tx_init(tx); // to be removed
-	
+    std_msgs::String tx_str;	
 	
     while (ros::ok())
     {
@@ -164,13 +151,9 @@ int main(int argc, char **argv)
         
         // serial transmit
         if (++tx_count %2 == 0) {
-            /*tx[0] ++;
-            tx[1] ++;
-            tx[2] ++;
-            tx[3] ++;*/
             tx[tx_len] = modified_crc32_mpeg_2((uint8_t*)tx, 4*tx_len);
-            tx_str.data = ser.write((const uint8_t*)tx, sizeof(tx)+3);
-            //write_pub.publish(tx_str);
+            tx_str.data = ser.write((const uint8_t*)tx, sizeof(tx)-1);
+            write_pub.publish(tx_str);
         }
         
        
