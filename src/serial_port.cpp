@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
     try
     {
-        ser.setPort("/dev/ttyUSB0");
+        ser.setPort("/dev/STM1");
         ser.setBaudrate(115200);
         serial::Timeout to = serial::Timeout::simpleTimeout(12);
         ser.setTimeout(to);
