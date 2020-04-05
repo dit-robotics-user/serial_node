@@ -10,7 +10,7 @@ http://wjwwood.io/serial/
         ```
         $ echo 'KERNEL=="ttyUSB*", KERNELS=="1-1.3", MODE:="0777", GROUP:="dialout", SYMLINK+="STM1"' >> /etc/udev/rules.d/usb.rules
         
-        $ echo 'KERNEL=="ttyUSB*", KERNELS=="1-1.3", MODE:="0777", GROUP:="dialout", SYMLINK+="STM1"' >> /etc/udev/rules.d/usb.rules
+        $ echo 'KERNEL=="ttyUSB*", KERNELS=="1-1.4", MODE:="0777", GROUP:="dialout", SYMLINK+="STM1"' >> /etc/udev/rules.d/usb.rules
 
         $ sudo service udev reload
 
