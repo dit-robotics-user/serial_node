@@ -19,7 +19,7 @@ serial::Serial ser; //聲明串口對象
 int tx_count = 0;
 int tx_len = 4;
 int32_t tx[6]={0};// tx_len + 2
-int rx_len = 3;
+int rx_len = 4;
 uint32_t indata[6] = {0};// rx_len + 2
 int32_t tmp;
 	
