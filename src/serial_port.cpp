@@ -102,7 +102,7 @@ int main(int argc, char **argv)
         return -1;
     }
     
-    ros::Rate loop_rate(300);
+    ros::Rate loop_rate(400);
 
     //uint32_t tx[mode, R1, R2, R3, crc];
     // mode(hex):
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 		
         if (ser.available()>=4*(rx_len+2))
 	{
-            test = ser.readline(4*(rx_len+2), "Fuck");
+            test = ser.readline(4*(rx_len+2));
             
 			rx_msg.data.clear();
 			for(int i=0; i<rx_len+1; i++){

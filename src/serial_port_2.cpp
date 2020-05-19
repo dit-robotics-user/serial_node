@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 		
         if (ser.available()>=4*(rx_len+2))
         {
-            test = ser.readline(4*(rx_len+2), "Fuck");
+            test = ser.readline(4*(rx_len+2));
             
 			rx_msg.data.clear();
 			for(int i=0; i<rx_len+1; i++){
