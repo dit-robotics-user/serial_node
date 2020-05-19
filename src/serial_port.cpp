@@ -102,7 +102,7 @@ int main(int argc, char **argv)
         return -1;
     }
     
-    ros::Rate loop_rate(400);
+    ros::Rate loop_rate(300);
 
     //uint32_t tx[mode, R1, R2, R3, crc];
     // mode(hex):
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 			rx_msg.data.clear();
 			for(int i=0; i<rx_len+1; i++){
 				tmp = (int32_t)test[4*i] + (int32_t)test[4*i+1]*256 +
-					(int32_t)test[4*i+2]*65536 +(int32_t)test[4*i+3]*16777216;	
+					(int32_t)test[4*i+2]*65536 +(int32_t)test[4*i+3]*16777216;//+(int32_t)test[4*i+4]*4294967296+(int32_t)test[4*i+5]*1099511627776	
 				rx_msg.data.push_back(tmp);
 				indata[i] = tmp;
 			}
