@@ -17,10 +17,10 @@ using namespace std;
 serial::Serial ser; //聲明串口對象
 
 int tx_count = 0;
-int tx_len = 5;
-int32_t tx[7]={0};// tx_len + 2
-int rx_len = 5;
-uint32_t indata[7] = {0};// rx_len + 2
+int tx_len = 4;
+int32_t tx[6]={0};// tx_len + 2
+int rx_len = 4;
+uint32_t indata[6] = {0};// rx_len + 2
 int32_t tmp;
 	
 int rcv_count = 0;
@@ -64,7 +64,7 @@ void fromAgent_callback(const std_msgs::Int32MultiArray::ConstPtr &msg)
     tx[1] = msg->data[1];
     tx[2] = msg->data[2];
     tx[3] = msg->data[3];
-    tx[4] = msg->data[4];
+    // tx[4] = msg->data[4];
     //tx[4] = modified_crc32_mpeg_2((uint8_t*)tx, 16);
 }
 
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 			rx_msg.data.clear();
 			for(int i=0; i<rx_len+1; i++){
 				tmp = (int32_t)test[4*i] + (int32_t)test[4*i+1]*256 +
-					(int32_t)test[4*i+2]*65536 +(int32_t)test[4*i+3]*16777216+(int32_t)test[4*i+4]*4294967296;	
+					(int32_t)test[4*i+2]*65536 +(int32_t)test[4*i+3]*16777216;//+(int32_t)test[4*i+4]*4294967296;	
 				rx_msg.data.push_back(tmp);
 				indata[i] = tmp;
 			}
