@@ -25,9 +25,9 @@ int32_t tmp;
 	
 int rcv_count = 0;
 int error_count = 0;
-int success_rate = 0;
+// int success_rate = 0;
 
-int pi_2_ST2_rate = 0;
+// int pi_2_ST2_rate = 0;
 
 // crc only for stm
 uint32_t modified_crc32_mpeg_2(uint8_t *data, uint8_t length)
@@ -77,9 +77,9 @@ int main(int argc, char **argv)
     
     ros::Subscriber from_agent = nh.subscribe("txST2", 1, fromAgent_callback);
     ros::Publisher read_pub = nh.advertise<std_msgs::Int32MultiArray>("rxST2", 1);
-    ros::Publisher rate_pub = nh.advertise<std_msgs::Int32>("success_rate2", 1000);
+    // ros::Publisher rate_pub = nh.advertise<std_msgs::Int32>("success_rate2", 1000);
 
-    ros::Publisher pi2ST2_pub = nh.advertise<std_msgs::Int32>("pi2ST2_rate", 1000);    
+    // ros::Publisher pi2ST2_pub = nh.advertise<std_msgs::Int32>("pi2ST2_rate", 1000);    
     
     try
     {
@@ -117,9 +117,9 @@ int main(int argc, char **argv)
     
     std_msgs::Int32MultiArray rx_msg;
     string test;			    
-	std_msgs::Int32 success_rate_msg;
+	// std_msgs::Int32 success_rate_msg;
     std_msgs::String tx_str;	
-	std_msgs::Int32 pi_2_ST2_rate_msg;
+	// std_msgs::Int32 pi_2_ST2_rate_msg;
 	
     while (ros::ok())
     {
@@ -135,9 +135,9 @@ int main(int argc, char **argv)
 				rx_msg.data.push_back(tmp);
 				indata[i] = tmp;
 			}
-			pi_2_ST2_rate = rx_msg.data[3];
-			pi_2_ST2_rate_msg.data = pi_2_ST2_rate;
-			pi2ST2_pub.publish(pi_2_ST2_rate_msg);
+			// pi_2_ST2_rate = rx_msg.data[3];
+			// pi_2_ST2_rate_msg.data = pi_2_ST2_rate;
+			// pi2ST2_pub.publish(pi_2_ST2_rate_msg);
 			// crc ckeck
 			rcv_count ++;
 			if (indata[rx_len] == modified_crc32_mpeg_2((uint8_t*)indata, 4*rx_len)) {
@@ -147,14 +147,14 @@ int main(int argc, char **argv)
 			    error_count++;
 			}
 			
-			if (rcv_count >= 50) {
+			/* if (rcv_count >= 50) {
 			    success_rate = (int)(100*(rcv_count-error_count)/rcv_count);
                 success_rate_msg.data = success_rate;
                 rate_pub.publish(success_rate_msg);
                 
 			    rcv_count = 0;
 			    error_count = 0;
-			}
+			} */
         }
         
         // serial transmit
